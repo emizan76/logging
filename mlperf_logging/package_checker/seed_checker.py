@@ -137,6 +137,7 @@ class SeedChecker:
                 this benchmark.
 
         """
+        print("Running seed checker")
         no_logged_seed, error_messages = self._assert_unique_seed_per_run(
             result_files)
 

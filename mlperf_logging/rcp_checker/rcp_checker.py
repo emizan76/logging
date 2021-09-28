@@ -5,6 +5,7 @@ RCP checker: Verifies convergence points of submissions by comparing them agains
 import argparse
 import glob
 import json
+import logging
 import os
 import numpy as np
 import re
@@ -313,6 +314,8 @@ class RCP_Checker:
         - (False) Fail / RCP interpolated
         - (False) Missing RCP / Submit missing RCP
         '''
+        logging.info("Running RCP Checker")
+        print("Running RCP Checker")
         dir = dir.rstrip("/")
         pattern = '{folder}/result_*.txt'.format(folder=dir)
         benchmark = os.path.split(dir)[1]

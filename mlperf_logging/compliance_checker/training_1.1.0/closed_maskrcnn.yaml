@@ -8,9 +8,6 @@
     REQ: AT_LEAST_ONE
     CHECK:
         - "'tensor' in v['metadata']"
-    POST: >
-        s['initialized_tensors'] += [v['metadata']['tensor']]
-- END:
     CHECK: >
         sorted(s['initialized_tensors']) == sorted([
             "FPN_inner_block1",
@@ -35,6 +32,8 @@
             "ROI_MASK_PREDICTOR_fcn5",
             "ROI_MASK_PREDICTOR_fcn_logits",
         ])
+    POST: >
+        s['initialized_tensors'] += [v['metadata']['tensor']]
 
 - KEY:
     NAME:  global_batch_size

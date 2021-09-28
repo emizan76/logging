@@ -17,11 +17,6 @@ checker = mlp_compliance.make_checker(
 
 valid, system_id, benchmark, result = mlp_compliance.main(args.filename, config_file, checker)
 
-print(valid)
-print(system_id)
-print(benchmark)
-print(result)
-
 if not valid:
     sys.exit(1)
 else:

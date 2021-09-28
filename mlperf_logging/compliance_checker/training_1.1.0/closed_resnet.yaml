@@ -8,9 +8,6 @@
     REQ: AT_LEAST_ONE
     CHECK:
         - "'tensor' in v['metadata']"
-    POST: >
-        s['initialized_tensors'] += [v['metadata']['tensor']]
-- END:
     CHECK: >
         sorted(s['initialized_tensors']) == sorted([
             "bn0_beta",
@@ -175,6 +172,8 @@
             "stage4_unit3_conv2_weight",
             "stage4_unit3_conv3_weight",
         ])
+    POST: >
+        s['initialized_tensors'] += [v['metadata']['tensor']]
 
 - KEY:
     NAME:  global_batch_size

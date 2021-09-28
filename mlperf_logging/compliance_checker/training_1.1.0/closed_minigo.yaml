@@ -8,9 +8,6 @@
     REQ: AT_LEAST_ONE
     CHECK:
         - "'tensor' in v['metadata']"
-    POST: >
-        s['initialized_tensors'] += [v['metadata']['tensor']]
-- END:
     CHECK: >
         sorted(s['initialized_tensors']) == sorted([
             "conv2d/kernel",
@@ -62,6 +59,8 @@
             "dense_2/bias",
             "global_step",
         ])
+    POST: >
+        s['initialized_tensors'] += [v['metadata']['tensor']]
 
 - KEY:
     NAME:  train_batch_size

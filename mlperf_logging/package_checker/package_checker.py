@@ -6,6 +6,7 @@ from __future__ import print_function
 import argparse
 import glob
 import json
+import logging
 import os
 import sys
 
@@ -30,6 +31,7 @@ def _get_sub_folders(folder):
 
 def _print_divider_bar():
     print('------------------------------')
+    logging.info('------------------------------')
 
 
 def check_training_result_files(folder, usage, ruleset, quiet, werror,
@@ -84,8 +86,6 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
             any_pattern = '{folder}/*'.format(folder=benchmark_folder)
             all_files = glob.glob(any_pattern, recursive=True)
 
-            print("LOOK:", benchmark, result_files)
-
             # Find all source codes for this benchmark.
             source_files = find_source_files_under(
                 os.path.join(folder, 'benchmarks', benchmark))
@@ -93,6 +93,8 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
             _print_divider_bar()
             print('System {}'.format(system))
             print('Benchmark {}'.format(benchmark))
+            logging.info('System %s', system)
+            logging.info('Benchmark %s', benchmark)
 
             if is_weak_scaling:
                 if len(result_files) < benchmark_file_counts[benchmark]:
@@ -120,6 +122,8 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
 
             errors_found = 0
             result_files.sort()
+            print(benchmark_folder)
+            logging.info('Running compliance checks in dir %s', benchmark_folder)
             for result_file in result_files:
                 result_basename = os.path.basename(result_file)
                 result_name, _ = os.path.splitext(result_basename)
@@ -127,7 +131,7 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
 
                 # For each result file, run the benchmark's compliance checks.
                 _print_divider_bar()
-                print('Run {}'.format(run))
+                print('Result File: ', result_name)
                 config_file = '{usage}_{ruleset}/common.yaml'.format(
                     usage=usage,
                     ruleset=ruleset,
@@ -158,12 +162,12 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
                 too_many_errors = True
 
             # Check if each run use unique seeds.
-            if ruleset == '1.0.0' and division == 'closed':
+            if (ruleset == '1.0.0' or ruleset == '1.1.0') and division == 'closed':
                 if not seed_checker.check_seeds(result_files, source_files):
                     too_many_errors = True
 
             # Run RCP checker for 1.0.0
-            if ruleset == '1.0.0' and division == 'closed' and benchmark != 'minigo':
+            if (ruleset == '1.0.0'  or ruleset == '1.1.0') and division == 'closed' and benchmark != 'minigo':
                 rcp_chk = rcp_checker.make_checker(usage, ruleset, verbose=False, bert_train_samples=rcp_bert_train_samples)
                 rcp_chk._compute_rcp_stats()
 
@@ -175,8 +179,9 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
 
             _print_divider_bar()
     if too_many_errors:
-        raise Exception(
-            'Found too many errors in logging, see log above for details.')
+        print('Found too many errors in logging, see log above for details. SUBMISSION FAILED YOU LOSER !')
+    else:
+        print('Congratulations, you passed all compliance checks, SUBMISSION ACCEPTED !')
 
 
 def check_systems(folder, usage, ruleset):
@@ -210,9 +215,11 @@ def check_training_package(folder, usage, ruleset, quiet, werror, rcp_bypass, rc
         usage: The usage such as training or hpc
         ruleset: The ruleset such as 0.6.0, 0.7.0, 1.0.0 or 1.0.0.
     """
-    check_training_result_files(folder, usage, ruleset, quiet, werror, rcp_bypass, rcp_bert_train_samples)
-    if ruleset == '1.0.0':
+    if ruleset == '1.0.0' or ruleset == '1.1.0':
+        print ("Checking Systems Description Files")
+        logging.info('Checking System Description Files')
         check_systems(folder, usage, ruleset)
+    check_training_result_files(folder, usage, ruleset, quiet, werror, rcp_bypass, rcp_bert_train_samples)
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -266,6 +273,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
+    logging.basicConfig(filename='logger.log', encoding='utf-8', level=logging.INFO)
     check_training_package(args.folder, args.usage, args.ruleset, args.quiet, args.werror, args.rcp_bypass, args.rcp_bert_train_samples)
 
 

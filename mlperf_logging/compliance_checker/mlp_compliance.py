@@ -8,6 +8,7 @@ import argparse
 import os
 import yaml
 import json
+import logging
 import re
 import math
 
@@ -60,7 +61,6 @@ class ComplianceChecker:
         if self.werror:
             self.put_message(msg, key)
         elif not self.quiet:
-            print(key, msg)
             self.warnings[key] = msg
 
     def put_message(self, msg, key=None):
@@ -224,8 +224,10 @@ class ComplianceChecker:
                                          key=k)
 
             if v['REQ']=='AT_LEAST_ONE':
-                if len(reported_values[k])<1:
-                     self.put_message(f"Required AT_LEAST_ONE occurrence of '{k}' but found {len(reported_values[k])}",
+                if k == 'weights_initialization':
+                   self.put_warning(f"Warning: Failed weights initialization check", key='weights_initialization')
+                elif len(reported_values[k])<1:
+                   self.put_message(f"Required AT_LEAST_ONE occurrence of '{k}' but found {len(reported_values[k])}",
                                       key=k)
 
             if v['REQ'].startswith('AT_LEAST_ONE_OR'):
@@ -259,6 +261,8 @@ class ComplianceChecker:
                 self.put_message('Could not find config file: {}'.format(config_file))
 
             # processing a config may have a side affect of pushing another config(s) to be checked
+            print("Running checks: ", current_config)
+            logging.info("Running checks: %s", current_config)
             self.configured_checks(loglines,  config_file)
 
 
@@ -306,7 +310,7 @@ def get_parser():
     parser.add_argument('--config',  type=str,
                     help='mlperf logging config, by default it loads {usage}_{ruleset}/common.yaml', default=None)
     parser.add_argument('--werror', action='store_true',
-                    help='Treas warnings as errors')
+                    help='Treat warnings as errors')
     parser.add_argument('--quiet', action='store_true',
                     help='Suppress warnings. Does nothing if --werror is set')
 

@@ -8,9 +8,6 @@
     REQ: AT_LEAST_ONE
     CHECK:
         - "'tensor' in v['metadata']"
-    POST: >
-        s['initialized_tensors'] += [v['metadata']['tensor']]
-- END:
     CHECK: >
         sorted(s['initialized_tensors']) == sorted([
             "bert/embeddings/word_embeddings",
@@ -413,6 +410,8 @@
             "cls/seq_relationship/output_weights",
             "cls/seq_relationship/output_bias",
         ])
+    POST: >
+        s['initialized_tensors'] += [v['metadata']['tensor']]
 
 - KEY:
     NAME:  global_batch_size
