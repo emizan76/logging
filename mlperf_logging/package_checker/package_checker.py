@@ -19,7 +19,6 @@ from ..system_desc_checker import system_desc_checker
 from ..benchmark_meta import get_allowed_benchmarks, get_result_file_counts
 
 
-
 def _get_sub_folders(folder):
     sub_folders = [
         os.path.join(folder, sub_folder) for sub_folder in os.listdir(folder)
@@ -30,7 +29,6 @@ def _get_sub_folders(folder):
 
 
 def _print_divider_bar():
-    print('------------------------------')
     logging.info('------------------------------')
 
 
@@ -77,7 +75,7 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
 
             # If it is not a recognized benchmark, skip further checks.
             if benchmark not in allowed_benchmarks:
-                print('Skipping benchmark: {}'.format(benchmark))
+                logging.warning(' Skipping benchmark %s', benchmark)
                 continue
 
             # Find all result files for this benchmark.
@@ -91,10 +89,10 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
                 os.path.join(folder, 'benchmarks', benchmark))
 
             _print_divider_bar()
-            print('System {}'.format(system))
-            print('Benchmark {}'.format(benchmark))
-            logging.info('System %s', system)
-            logging.info('Benchmark %s', benchmark)
+            logging.info(' Running compliance checks in dir %s', benchmark_folder)
+            logging.info(' System %s', system)
+            logging.info(' Benchmark %s', benchmark)
+            _print_divider_bar()
 
             if is_weak_scaling:
                 if len(result_files) < benchmark_file_counts[benchmark]:
@@ -113,6 +111,7 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
                         len(result_files),
                     ))
                     too_many_errors = True
+                    logging.error('Incorrect number of files in dir, or wrong file names')
             if len(all_files) > len(result_files):
                 print(all_files)
                 print('Detected {} total files in directory {}, but some do not conform '
@@ -122,8 +121,6 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
 
             errors_found = 0
             result_files.sort()
-            print(benchmark_folder)
-            logging.info('Running compliance checks in dir %s', benchmark_folder)
             for result_file in result_files:
                 result_basename = os.path.basename(result_file)
                 result_name, _ = os.path.splitext(result_basename)
@@ -131,7 +128,6 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
 
                 # For each result file, run the benchmark's compliance checks.
                 _print_divider_bar()
-                print('Result File: ', result_name)
                 config_file = '{usage}_{ruleset}/common.yaml'.format(
                     usage=usage,
                     ruleset=ruleset,
@@ -151,14 +147,11 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
                 if not valid:
                     errors_found += 1
             if errors_found == 1 and benchmark != 'unet3d':
-                print('WARNING: One file does not comply.')
-                print('WARNING: Allowing this failure under olympic scoring '
-                      'rules.')
+                logging.warning(" One file does not comply, accepting this under olympic scoring")
             elif errors_found > 0 and errors_found <= 4 and benchmark == 'unet3d':
-                print('WARNING: {errors} file does not comply.'.format(errors=errors_found))
-                print('WARNING: Allowing this failure for unet3d under olympic scoring '
-                      'rules.')
+                logging.warning(" %d files do not comply, accepting this under olympic scoring", errors_found)
             elif errors_found > 0:
+                logging.error("Too many file compliance errors")
                 too_many_errors = True
 
             # Check if each run use unique seeds.
@@ -174,14 +167,16 @@ def check_training_result_files(folder, usage, ruleset, quiet, werror,
                 # Now go again through result files to do RCP checks
                 rcp_pass, rcp_msg = rcp_chk._check_directory(benchmark_folder, rcp_bypass)
                 if not rcp_pass:
-                    print('ERROR: RCP Test Failed: {}.'.format(rcp_msg))
+                    logging.error(' RCP Test Failed: %s', rcp_msg)
                     too_many_errors = True
+                else:
+                    logging.info('RCP Test Passed: %s', rcp_msg)
 
             _print_divider_bar()
     if too_many_errors:
-        print('Found too many errors in logging, see log above for details. SUBMISSION FAILED YOU LOSER !')
+        logging.info('Found too many errors in logging, see log above for details. SUBMISSION FAILED YOU LOSER !')
     else:
-        print('Congratulations, you passed all compliance checks, SUBMISSION ACCEPTED !')
+        logging.info('Congratulations, you passed all compliance checks, SUBMISSION ACCEPTED !')
 
 
 def check_systems(folder, usage, ruleset):
@@ -216,8 +211,7 @@ def check_training_package(folder, usage, ruleset, quiet, werror, rcp_bypass, rc
         ruleset: The ruleset such as 0.6.0, 0.7.0, 1.0.0 or 1.0.0.
     """
     if ruleset == '1.0.0' or ruleset == '1.1.0':
-        print ("Checking Systems Description Files")
-        logging.info('Checking System Description Files')
+        logging.info(' Checking System Description Files')
         check_systems(folder, usage, ruleset)
     check_training_result_files(folder, usage, ruleset, quiet, werror, rcp_bypass, rcp_bert_train_samples)
 
@@ -273,7 +267,10 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    logging.basicConfig(filename='logger.log', encoding='utf-8', level=logging.INFO)
+    logging.basicConfig(filename='package_checker.log', encoding='utf-8', level=logging.INFO)
+    logging.getLogger().addHandler(logging.StreamHandler())
+    formatter = logging.Formatter("%(levelname)s - %(message)s")
+    logging.getLogger().handlers[0].setFormatter(formatter)
     check_training_package(args.folder, args.usage, args.ruleset, args.quiet, args.werror, args.rcp_bypass, args.rcp_bert_train_samples)
 
 

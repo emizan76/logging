@@ -1,6 +1,12 @@
 import sys
+import logging
 
 from . import rcp_checker
+
+logging.basicConfig(filename='rcp_checker.log', encoding='utf-8', level=logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler())
+formatter = logging.Formatter("%(levelname)s - %(message)s")
+logging.getLogger().handlers[0].setFormatter(formatter)
 
 parser = rcp_checker.get_parser()
 args = parser.parse_args()
@@ -11,7 +17,7 @@ checker._compute_rcp_stats()
 test, msg = checker._check_directory(args.dir)
 
 if test:
-    print(msg, ",RCP test passed")
+    logging.info("%s ,RCP test passed", msg)
 else:
-    print(msg, ",RCP test failed")
+    logging.info("%s ,RCP test failed", msg)
     sys.exit(1)

@@ -1,7 +1,12 @@
 import sys
+import logging
 
 from . import mlp_compliance
 
+logging.basicConfig(filename='compliance_checker.log', encoding='utf-8', level=logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler())
+formatter = logging.Formatter("%(levelname)s - %(message)s")
+logging.getLogger().handlers[0].setFormatter(formatter)
 
 parser = mlp_compliance.get_parser()
 args = parser.parse_args()
@@ -18,6 +23,7 @@ checker = mlp_compliance.make_checker(
 valid, system_id, benchmark, result = mlp_compliance.main(args.filename, config_file, checker)
 
 if not valid:
+    logging.info('FAILED')
     sys.exit(1)
 else:
-    print('SUCCESS')
+    logging.info('SUCCESS')

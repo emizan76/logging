@@ -83,7 +83,7 @@ class ComplianceChecker:
                     *self.not_overwritable
         ])
         if message:
-          print(message)
+          logging.info(" %s",message)
 
     def has_messages(self):
         return self.not_overwritable or self.overwritable
@@ -225,7 +225,7 @@ class ComplianceChecker:
 
             if v['REQ']=='AT_LEAST_ONE':
                 if k == 'weights_initialization':
-                   self.put_warning(f"Warning: Failed weights initialization check", key='weights_initialization')
+                   self.put_warning(f"Warning: Failed weights initialization check", key=k)
                 elif len(reported_values[k])<1:
                    self.put_message(f"Required AT_LEAST_ONE occurrence of '{k}' but found {len(reported_values[k])}",
                                       key=k)
@@ -261,22 +261,21 @@ class ComplianceChecker:
                 self.put_message('Could not find config file: {}'.format(config_file))
 
             # processing a config may have a side affect of pushing another config(s) to be checked
-            print("Running checks: ", current_config)
-            logging.info("Running checks: %s", current_config)
+            logging.info("  Compliance checks: %s", current_config)
             self.configured_checks(loglines,  config_file)
 
 
     def check_file(self, filename, config_file):
 
+        logging.info(" Running compliance on file: %s", filename)
         loglines, errors = mlp_parser.parse_file(filename, ruleset=self.ruleset)
 
         if len(errors) > 0:
-            print('Found parsing errors:')
+            logging.warning(' Found parsing errors:')
             for line, error in errors:
-                print(line)
-                print('  ^^ ', error)
-            print()
-            self.put_message('Log lines had parsing errors.')
+                logging.warning(line)
+                logging.warning('  ^^ %s', error)
+            self.put_message(' Log lines had parsing errors.')
 
         self.check_loglines(loglines, config_file)
 
